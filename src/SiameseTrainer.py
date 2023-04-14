@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 
-from annoy import AnnoyIndex
+# from annoy import AnnoyIndex
 from sklearn.neighbors import NearestNeighbors
 from torch.utils.data import DataLoader, random_split
 

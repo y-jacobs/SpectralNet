@@ -28,7 +28,7 @@ def set_seed(seed: int = 0):
 
 def main():
     config_path = sys.argv[1]
-    with open (config_path, 'r') as f:
+    with open(config_path, 'r') as f:
         config = json.load(f)
 
     dataset = config["dataset"]
@@ -68,10 +68,13 @@ def main():
         
     else:
         y_test = y_test.detach().cpu().numpy()
+        y_test = np.argmax(y_test, axis=-1)
         spectralnet.predict(x_train)
         train_embeddings = spectralnet.embeddings_
+        np.save('train_embeddings.npy', train_embeddings)
         test_assignments = spectralnet.predict(x_test)
         test_embeddings = spectralnet.embeddings_
+        np.save('test_embeddings.npy', test_embeddings)
         kmeans_train = KMeans(n_clusters=n_clusters).fit(train_embeddings)
         dist_matrix = cdist(test_embeddings, kmeans_train.cluster_centers_)
         closest_cluster = np.argmin(dist_matrix, axis=1)

@@ -91,6 +91,9 @@ class SpectralNetLoss(nn.Module):
         return loss
 
 
+
+
+
 class SpectralTrainer:
     def __init__(self, config: dict, device: torch.device, is_sparse: bool = False):
         """
@@ -130,6 +133,7 @@ class SpectralTrainer:
 
         self.X = X.view(X.size(0), -1)
         self.y = y
+        self.A = None
         self.counter = 0
         self.siamese_net = siamese_net
         self.criterion = SpectralNetLoss()
@@ -140,13 +144,21 @@ class SpectralTrainer:
                                                               factor=self.lr_decay, 
                                                               patience=self.patience)
 
-        
+        with open('../data/Cora/A_train.txt', 'r') as f:
+            # Read lines from file and split into numerical values
+            adj_matrix = [[float(val) for val in line.split()] for line in f.readlines()]
+            # add self-loops
+            for i in range(len(adj_matrix)):
+                adj_matrix[i][i] = 1
+            # convert to tensor
+            self.A = torch.tensor(adj_matrix, dtype=torch.float32)
         train_loader, ortho_loader, valid_loader = self._get_data_loader()
         
         print("Training SpectralNet:")
         for epoch in range(self.epochs):
             train_loss = 0.0
-            for (X_grad, y_grad), (X_orth, _) in zip(train_loader, ortho_loader):
+            for batch_idx, ((X_grad, y_grad), (X_orth, _)) in enumerate(zip(train_loader, ortho_loader)):
+                batch_indices = train_loader.dataset.indices[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
                 X_grad = X_grad.to(device=self.device)
                 X_grad = X_grad.view(X_grad.size(0), -1)
                 X_orth = X_orth.to(device=self.device)
@@ -172,7 +184,8 @@ class SpectralTrainer:
                     with torch.no_grad():
                         X_grad = self.siamese_net.forward_once(X_grad)
 
-                W = self._get_affinity_matrix(X_grad)
+                # W = self._get_affinity_matrix(X_grad)
+                W = self._get_adjacency_matrix(batch_indices)
 
                 loss = self.criterion(W, Y)
                 loss.backward()
@@ -182,6 +195,7 @@ class SpectralTrainer:
             train_loss /= len(train_loader)
             
             # Validation step
+
             valid_loss = self.validate(valid_loader)
             self.scheduler.step(valid_loss)
 
@@ -218,8 +232,8 @@ class SpectralTrainer:
                     if self.siamese_net is not None:
                         X = self.siamese_net.forward_once(X)
 
-                W = self._get_affinity_matrix(X)
-
+                # W = self._get_affinity_matrix(X)
+                W = self._get_adjacency_matrix(valid_loader.dataset.indices)
                 loss = self.criterion(W, Y)
                 valid_loss += loss.item()
         
@@ -227,8 +241,15 @@ class SpectralTrainer:
 
         valid_loss /= len(valid_loader)
         return valid_loss
-            
-    
+
+    def _get_adjacency_matrix(self, batch_indices):
+        m = len(batch_indices)
+        sub_matrix = torch.zeros((m, m))
+        for i in range(m):
+            for j in range(m):
+                sub_matrix[i][j] = self.A[batch_indices[i]][batch_indices[j]]
+        return sub_matrix
+
     def _get_affinity_matrix(self, X: torch.Tensor) -> torch.Tensor:
         """
         This function computes the affinity matrix W using the Gaussian kernel.
@@ -266,6 +287,7 @@ class SpectralTrainer:
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         ortho_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         valid_loader = DataLoader(valid_dataset, batch_size=self.batch_size, shuffle=False)
+
         return train_loader, ortho_loader, valid_loader
 
 

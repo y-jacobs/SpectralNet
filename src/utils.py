@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-from annoy import AnnoyIndex
+# from annoy import AnnoyIndex
 from sklearn.neighbors import NearestNeighbors
 
 

@@ -19,11 +19,61 @@ def load_mnist() -> tuple:
                                 train=False,
                                 download=True,
                                 transform=tensor_transform)
-    
+
     x_train, y_train = zip(*train_set)
     x_train, y_train = torch.cat(x_train), torch.Tensor(y_train)
     x_test, y_test = zip(*test_set)
     x_test, y_test = torch.cat(x_test), torch.Tensor(y_test)
+
+    return x_train, y_train, x_test, y_test
+
+
+def load_cora() -> tuple:
+    # with open('../data/Cora/A_train.txt', 'r') as f:
+    #     # Read lines from file and split into numerical values
+    #     data = [[float(val) for val in line.split()] for line in f.readlines()]
+    #
+    # # Convert data to tensor
+    # train_data = torch.tensor(data)
+    #
+    # with open('../data/Cora/A_test.txt', 'r') as f:
+    #     # Read lines from file and split into numerical values
+    #     data = [[float(val) for val in line.split()] for line in f.readlines()]
+    #
+    # # Convert data to tensor
+    # test_data = torch.tensor(data)
+
+    with open('../data/Cora/X_train.txt', 'r') as f:
+        # Read lines from file and split into numerical values
+        data = [[float(val) for val in line.split()] for line in f.readlines()]
+
+    # Convert data to tensor
+    train_data = torch.tensor(data)
+
+    with open('../data/Cora/X_test.txt', 'r') as f:
+        # Read lines from file and split into numerical values
+        data = [[float(val) for val in line.split()] for line in f.readlines()]
+
+    # Convert data to tensor
+    test_data = torch.tensor(data)
+    with open('../data/Cora/y_train.txt', 'r') as f:
+        # Read lines from file and split into numerical values
+        data = [[float(val) for val in line.split()] for line in f.readlines()]
+
+    # Convert data to tensor
+    train_y = torch.tensor(data)
+
+    with open('../data/Cora/y_test.txt', 'r') as f:
+        # Read lines from file and split into numerical values
+        data = [[float(val) for val in line.split()] for line in f.readlines()]
+
+    # Convert data to tensor
+    test_y = torch.tensor(data)
+
+    x_train = train_data
+    y_train = train_y
+    x_test = test_data
+    y_test = test_y
 
     return x_train, y_train, x_test, y_test
 
@@ -91,6 +141,8 @@ def load_data(dataset: str) -> tuple:
         x_train, y_train, x_test, y_test = load_twomoon()
     elif dataset == 'reuters':
         x_train, y_train, x_test, y_test = load_reuters()
+    elif dataset == 'cora':
+        x_train, y_train, x_test, y_test = load_cora()
     else:
         try:
             data_path = dataset["dpath"]

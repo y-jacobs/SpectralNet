@@ -1,5 +1,5 @@
 import random
-
+from sklearn.feature_extraction.text import TfidfTransformer
 import numpy as np
 
 
@@ -58,7 +58,7 @@ def make_reuters_data():
     X = CountVectorizer(dtype=np.float64, max_features=2000).fit_transform(data)
     Y = np.asarray(target)
 
-    from sklearn.feature_extraction.text import TfidfTransformer
+
     X = TfidfTransformer(norm='l2', sublinear_tf=True).fit_transform(X)
     X = np.asarray(X.todense()) * np.sqrt(X.shape[1])
 
